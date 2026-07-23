@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review Sarvam-style Web"
+  short_description: "Audit product UI for Sarvam brand fidelity"
+  default_prompt: "Use $review-sarvam-web to audit this interface for Sarvam visual fidelity and responsive quality."

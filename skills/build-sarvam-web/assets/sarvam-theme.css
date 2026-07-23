@@ -1,0 +1,465 @@
+/*
+ * Sarvam public web design token snapshot
+ * Captured 2026-07-23 from https://www.sarvam.ai/
+ *
+ * Font binaries and brand artwork are intentionally not included. Replace the
+ * local font URLs only with properly licensed files served from your origin.
+ */
+
+@font-face {
+  font-family: "Matter";
+  src: url("/fonts/MatterUprights-VF.woff2") format("woff2-variations");
+  font-style: normal;
+  font-weight: 100 1000;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Matter Semi Mono";
+  src: url("/fonts/MatterSemiMonoRegular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Season Mix";
+  src: url("/fonts/SeasonMixVFUprights.woff2") format("woff2-variations");
+  font-style: normal;
+  font-weight: 300 900;
+  font-display: swap;
+}
+
+:root {
+  --font-matter: "Matter", sans-serif;
+  --font-matter-mono: "Matter Semi Mono", monospace;
+  --font-season-mix: "Season Mix", sans-serif;
+  --font-code: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  --sarvam-font-display: var(--font-season-mix);
+  --sarvam-font-body: var(--font-matter);
+  --sarvam-font-metadata: var(--font-matter-mono);
+
+  --matter-weight-thin: 100;
+  --matter-weight-light: 325;
+  --matter-weight-normal: 425;
+  --matter-weight-medium: 525;
+  --matter-weight-semibold: 625;
+  --matter-weight-bold: 725;
+  --matter-weight-extrabold: 900;
+  --matter-weight-black: 1000;
+  --season-mix-weight-light: 300;
+  --season-mix-weight-normal: 425;
+  --season-mix-weight-medium: 525;
+  --season-mix-weight-semibold: 670;
+  --season-mix-weight-bold: 780;
+  --season-mix-weight-extrabold: 900;
+
+  --color-sf: #fafafa;
+  --color-sf-secondary: #f5f5f5;
+  --color-sf-tertiary: #f0f0f0;
+  --color-sf-quaternary: #e6e6e6;
+  --color-tx: #1f1f1f;
+  --color-tx-secondary: #3d3d3d;
+  --color-tx-tertiary: #666666;
+  --color-tx-inverse: #faf8f5;
+  --color-tx-brand: #29211d;
+  --color-tx-accent: #c4733d;
+  --color-st: #e6e6e6;
+  --color-st-secondary: #f0f0f0;
+  --color-sr-black: #141414;
+  --color-sr-sf-black: #141414;
+  --color-sr-sf-accent-indigo: #e8effc;
+
+  --color-sr-indigo-50: #fafcff;
+  --color-sr-indigo-100: #e8effc;
+  --color-sr-indigo-200: #d2dff9;
+  --color-sr-indigo-300: #a7c0f1;
+  --color-sr-indigo-400: #81a0e9;
+  --color-sr-indigo-500: #6a88e2;
+  --color-sr-indigo-600: #556adc;
+  --color-sr-indigo-700: #4250d5;
+  --color-sr-indigo-800: #3333cc;
+  --color-sr-indigo-900: #212191;
+  --color-sr-indigo-950: #11115b;
+
+  --color-sr-orange-50: #fffbfa;
+  --color-sr-orange-100: #feede6;
+  --color-sr-orange-200: #fddcce;
+  --color-sr-orange-300: #f9bb9e;
+  --color-sr-orange-400: #f59970;
+  --color-sr-orange-500: #f38858;
+  --color-sr-orange-600: #ee7944;
+  --color-sr-orange-700: #e96c2f;
+  --color-sr-orange-800: #e6651b;
+  --color-sr-orange-900: #a5460f;
+  --color-sr-orange-950: #682906;
+
+  --color-sr-yellow-50: #fff8e6;
+  --color-sr-yellow-100: #fff0cf;
+  --color-sr-yellow-200: #ffe8b7;
+  --color-sr-yellow-300: #ffcb79;
+  --color-sr-yellow-500: #feb12b;
+  --color-sr-yellow-600: #df9c2a;
+  --color-sr-yellow-700: #c08827;
+  --color-sr-yellow-800: #a27224;
+  --color-sr-yellow-950: #362813;
+
+  --color-sr-green-50: #f2f8eb;
+  --color-sr-green-100: #e3f1d8;
+  --color-sr-green-200: #c8e4b0;
+  --color-sr-green-300: #acd587;
+  --color-sr-green-400: #90c85b;
+  --color-sr-green-500: #83c040;
+  --color-sr-green-600: #6ea335;
+  --color-sr-green-700: #496d21;
+  --color-sr-green-800: #385418;
+  --color-sr-green-1000: #152605;
+
+  --color-sr-pink-50: #fceaf0;
+  --color-sr-pink-100: #f9d5e1;
+  --color-sr-pink-200: #efabc5;
+  --color-sr-pink-400: #d4508e;
+  --color-sr-pink-500: #b12060;
+  --color-sr-pink-600: #9d2055;
+  --color-sr-pink-700: #871f4b;
+  --color-sr-pink-800: #731e3f;
+  --color-sr-pink-950: #4d192c;
+
+  --color-sr-red-50: #fde7e2;
+  --color-sr-red-100: #f8d1c6;
+  --color-sr-red-200: #eba18f;
+  --color-sr-red-300: #db715c;
+  --color-sr-red-400: #c43d2b;
+  --color-sr-red-500: #b81514;
+  --color-sr-red-600: #a21913;
+  --color-sr-red-700: #781a11;
+  --color-sr-red-800: #781a11;
+
+  --color-sr-grey-50: #f9f9f9;
+  --color-sr-grey-100: #f5f5f5;
+  --color-sr-grey-200: #f0f0f0;
+  --color-sr-grey-300: #e6e6e6;
+  --color-sr-grey-400: #cccccc;
+  --color-sr-grey-500: #b3b3b3;
+  --color-sr-grey-600: #999999;
+  --color-sr-grey-700: #666666;
+  --color-sr-grey-800: #525252;
+  --color-sr-grey-950: #292929;
+
+  --color-br-blue: #393cc1;
+  --color-br-orange: #d5650f;
+  --color-ct-primary: #141414;
+  --color-ct-secondary: #666666;
+  --color-ct-tertiary: #999999;
+  --color-ct-quaternary: #b3b3b3;
+  --color-ct-accent-indigo: #3333cc;
+  --color-ct-accent-orange: #e6651b;
+  --color-ct-positive-primary: #6ea335;
+  --color-ct-danger-primary: #b81514;
+
+  --sarvam-space: 4px;
+  --sarvam-site-max: 1400px;
+  --sarvam-content-max: 1152px;
+  --sarvam-section-gap-mobile: 96px;
+  --sarvam-section-gap-desktop: 176px;
+  --sarvam-touch-target: 44px;
+  --sarvam-breakpoint-sm: 640px;
+  --sarvam-breakpoint-md: 768px;
+  --sarvam-breakpoint-lg: 1024px;
+  --sarvam-breakpoint-xl: 1280px;
+  --sarvam-breakpoint-2xl: 1536px;
+  --sarvam-radius-small: 8px;
+  --sarvam-radius-control: 12px;
+  --sarvam-radius-card-mobile: 16px;
+  --sarvam-radius-card-desktop: 24px;
+  --sarvam-radius-panel: 32px;
+  --sarvam-radius-nav: 34px;
+  --sarvam-radius-campaign: 52px;
+  --sarvam-radius-pill: 9999px;
+  --sarvam-transition: 150ms cubic-bezier(.4, 0, .2, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color: var(--color-tx);
+  background: var(--color-sf);
+  font-family: var(--sarvam-font-body);
+  font-size: 16px;
+  font-synthesis: none;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  overflow-x: clip;
+  color: var(--color-tx);
+  background: var(--color-sf);
+  font-family: var(--sarvam-font-body);
+  font-weight: var(--matter-weight-normal);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-sr-indigo-600);
+  outline-offset: 3px;
+}
+
+.sarvam-shell {
+  width: min(85%, var(--sarvam-site-max));
+  margin-inline: auto;
+}
+
+.sarvam-content {
+  width: min(100%, var(--sarvam-content-max));
+  margin-inline: auto;
+}
+
+.sarvam-page-flow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sarvam-section-gap-mobile);
+}
+
+.sarvam-display {
+  margin: 0;
+  color: var(--color-tx);
+  font-family: var(--sarvam-font-display);
+  font-size: 44px;
+  font-weight: var(--season-mix-weight-normal);
+  letter-spacing: -.025em;
+  line-height: 1.05;
+  text-wrap: pretty;
+}
+
+.sarvam-section-title {
+  margin: 0;
+  color: var(--color-tx);
+  font-family: var(--sarvam-font-display);
+  font-size: 30px;
+  font-weight: var(--season-mix-weight-normal);
+  line-height: 1.35;
+  text-wrap: pretty;
+}
+
+.sarvam-body {
+  color: var(--color-tx-secondary);
+  font-size: 16px;
+  font-weight: var(--matter-weight-normal);
+  line-height: 24px;
+}
+
+.sarvam-eyebrow,
+.sarvam-metadata {
+  margin: 0;
+}
+
+.sarvam-eyebrow {
+  color: var(--color-sr-indigo-900);
+  font-size: 14px;
+  letter-spacing: .025em;
+  line-height: 21px;
+}
+
+.sarvam-metadata {
+  font-family: var(--sarvam-font-metadata);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: .16em;
+  line-height: 18px;
+  text-transform: uppercase;
+}
+
+.sarvam-button {
+  position: relative;
+  display: inline-flex;
+  min-width: max-content;
+  min-height: var(--sarvam-touch-target);
+  align-items: center;
+  justify-content: center;
+  padding: 14px 24px;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--sarvam-radius-pill);
+  font-family: var(--sarvam-font-display);
+  font-size: 16px;
+  font-weight: var(--season-mix-weight-medium);
+  line-height: 24px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 350ms cubic-bezier(.2, 0, 0, 1),
+    background-color 350ms cubic-bezier(.2, 0, 0, 1),
+    box-shadow 350ms cubic-bezier(.2, 0, 0, 1),
+    transform 350ms cubic-bezier(.2, 0, 0, 1);
+  touch-action: manipulation;
+}
+
+.sarvam-button::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    80px at var(--sarvam-pointer-x, 50%) var(--sarvam-pointer-y, 50%),
+    rgba(255, 255, 255, .16),
+    transparent
+  );
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms cubic-bezier(.2, 0, 0, 1);
+}
+
+.sarvam-button:hover::after {
+  opacity: 1;
+}
+
+.sarvam-button:active {
+  transform: scale(.97);
+}
+
+.sarvam-button--primary {
+  color: #ffffff;
+  background: linear-gradient(180deg, #3a3f5c 0%, #1e2033 100%);
+}
+
+.sarvam-button--secondary {
+  color: #1e2033;
+  background: linear-gradient(180deg, #ffffff 0%, #f0f1f5 100%);
+  box-shadow: inset 0 0 0 1px rgba(30, 32, 51, .14);
+}
+
+.sarvam-floating-nav {
+  position: fixed;
+  top: 40px;
+  right: 8px;
+  left: 8px;
+  z-index: 10000;
+  min-height: 62px;
+  border: 1px solid rgba(220, 220, 220, .4);
+  border-radius: var(--sarvam-radius-nav);
+  background: rgba(255, 255, 255, .72);
+  box-shadow: 0 2px 24px rgba(0, 0, 0, .02),
+    inset 0 1px 3px rgba(0, 0, 0, .04);
+  backdrop-filter: blur(24px) saturate(1.3) brightness(1.04);
+}
+
+.sarvam-hero {
+  position: relative;
+  display: grid;
+  height: min(100vh, 1080px);
+  height: min(100svh, 1080px);
+  min-height: min(720px, 100svh);
+  max-height: 1080px;
+  padding-top: 144px;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Pure-CSS approximation of the recorded hero asset; geometry is original. */
+.sarvam-hero::before {
+  position: absolute;
+  z-index: -2;
+  top: -30%;
+  left: 50%;
+  width: 1600px;
+  height: 760px;
+  background: radial-gradient(
+    ellipse at 50% 8%,
+    #f9730c 0 75%,
+    #ffb053 78%,
+    #a5bbfc 80%,
+    #f4f7ff 100%
+  );
+  content: "";
+  filter: blur(61px);
+  transform: translateX(-50%);
+}
+
+.sarvam-hero::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .78), transparent 16%),
+    radial-gradient(circle at 50% 48%, #a5bbfc 0%, #d5e2ff 40%, transparent 70%),
+    linear-gradient(180deg, transparent 42%, var(--color-sf) 88%);
+  content: "";
+  opacity: .55;
+}
+
+.sarvam-card {
+  border: 1px solid var(--color-sf-quaternary);
+  border-radius: var(--sarvam-radius-card-mobile);
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+}
+
+.sarvam-panel {
+  border: 1px solid rgba(30, 32, 51, .08);
+  border-radius: var(--sarvam-radius-panel);
+  background: #ffffff;
+}
+
+@media (min-width: 48rem) {
+  .sarvam-shell {
+    width: min(75%, var(--sarvam-site-max));
+  }
+
+  .sarvam-page-flow {
+    gap: var(--sarvam-section-gap-desktop);
+  }
+
+  .sarvam-display {
+    font-size: 64px;
+  }
+
+  .sarvam-section-title {
+    font-size: 36px;
+  }
+
+  .sarvam-eyebrow {
+    font-size: 16px;
+    line-height: 24px;
+  }
+
+  .sarvam-card {
+    border-radius: var(--sarvam-radius-card-desktop);
+  }
+
+  .sarvam-hero {
+    padding-top: 160px;
+  }
+}
+
+@media (min-width: 64rem) {
+  .sarvam-floating-nav {
+    top: 44px;
+    right: 32px;
+    left: 32px;
+    min-height: 70px;
+    background: rgba(255, 255, 255, .55);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+
+  .sarvam-button:active {
+    transform: none;
+  }
+}
