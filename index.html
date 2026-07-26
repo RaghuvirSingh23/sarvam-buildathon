@@ -29,6 +29,14 @@
         padding: 0;
       }
 
+      /* Make the `hidden` attribute authoritative. Without this, class rules
+         like `.stopGlyph { display: block }` (author CSS) override the browser
+         default `[hidden] { display: none }` (user-agent CSS), leaving the
+         off-white stop glyph rendered as a square below the mic. */
+      [hidden] {
+        display: none !important;
+      }
+
       .page {
         --black: #141414;
         --off-white: #faf8f5;
