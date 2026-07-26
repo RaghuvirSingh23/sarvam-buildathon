@@ -326,6 +326,55 @@
         text-underline-offset: 3px;
       }
 
+      .voice {
+        display: flex;
+        width: 100%;
+        max-width: 340px;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding: 16px;
+        border: 1px solid rgb(33 33 145 / 14%);
+        border-radius: 18px;
+        background: rgb(250 248 245 / 72%);
+        box-shadow: 0 10px 30px rgb(33 33 145 / 8%);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        text-align: center;
+      }
+
+      .voice[hidden] {
+        display: none;
+      }
+
+      .voiceLang {
+        margin: 0;
+        font-family: "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        color: var(--deep-indigo);
+      }
+
+      .voiceText {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 600;
+        line-height: 24px;
+      }
+
+      .voiceEn {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 20px;
+        color: rgb(20 20 20 / 62%);
+      }
+
+      .voiceEn:empty {
+        display: none;
+      }
+
       .privacy {
         font-size: 11px;
         letter-spacing: 1.2px;
@@ -501,6 +550,15 @@
               >Download audio instead</a
             >
           </div>
+
+          <div class="voice" data-voice hidden>
+            <p class="voiceLang" data-voice-lang></p>
+            <p class="voiceText" data-voice-transcript></p>
+            <p class="voiceEn" data-voice-en></p>
+            <button class="saveButton" type="button" data-speak-button hidden>
+              SPEAK REPLY
+            </button>
+          </div>
         </section>
 
         <p class="privacy">AUDIO NEVER LEAVES THIS DEVICE</p>
@@ -529,7 +587,16 @@
           audio: document.querySelector("[data-audio]"),
           saveButton: document.querySelector("[data-save-button]"),
           downloadLink: document.querySelector("[data-download-link]"),
+          voice: document.querySelector("[data-voice]"),
+          voiceLang: document.querySelector("[data-voice-lang]"),
+          voiceTranscript: document.querySelector("[data-voice-transcript]"),
+          voiceEn: document.querySelector("[data-voice-en]"),
+          speakButton: document.querySelector("[data-speak-button]"),
         };
+
+        // Last transcription result, used to drive the spoken reply.
+        var lastListen = null;
+        var replyPlayer = null;
 
         // Recorder state (mirrors the hardened React implementation).
         var phase = "idle"; // idle | requesting | recording | processing | ready | error
@@ -729,6 +796,9 @@
                 ? "Recording ended after an interruption. Play it or save it below."
                 : "Recording ready. Play it or save it below."
           );
+
+          // Kick off the Sarvam voice-in pipeline for the finished clip.
+          runVoiceIn(nextClip);
         }
 
         function failActiveRecording(messageText) {
@@ -807,6 +877,10 @@
                 : new MediaRecorder(nextStream);
 
               replaceClip(null);
+              if (el.voice) {
+                el.voice.hidden = true;
+              }
+              lastListen = null;
               chunks = [];
               recorder = nextRecorder;
               stopReason = "manual";
@@ -913,8 +987,205 @@
           );
         }
 
+        function blobToBase64(blob) {
+          return new Promise(function (resolve, reject) {
+            var reader = new FileReader();
+            reader.onload = function () {
+              var s = String(reader.result || "");
+              var comma = s.indexOf(",");
+              resolve(comma >= 0 ? s.slice(comma + 1) : s);
+            };
+            reader.onerror = function () {
+              reject(reader.error || new Error("read failed"));
+            };
+            reader.readAsDataURL(blob);
+          });
+        }
+
+        function prettyLang(code) {
+          var names = {
+            "en-IN": "English",
+            "hi-IN": "Hindi",
+            "bn-IN": "Bengali",
+            "ta-IN": "Tamil",
+            "te-IN": "Telugu",
+            "kn-IN": "Kannada",
+            "ml-IN": "Malayalam",
+            "mr-IN": "Marathi",
+            "gu-IN": "Gujarati",
+            "pa-IN": "Punjabi",
+            "od-IN": "Odia",
+            "or-IN": "Odia",
+            unknown: "Detected",
+          };
+          return names[code] || code || "Detected";
+        }
+
+        function currentSessionId() {
+          return window.voiceSession && window.voiceSession.id
+            ? window.voiceSession.id
+            : null;
+        }
+
+        function appendTurn(role, content, language) {
+          if (
+            !window.voiceSession ||
+            !window.voiceSession.isReady() ||
+            !content
+          ) {
+            return;
+          }
+          var ctx = window.voiceSession.context;
+          ctx.push({ role: role, content: content });
+          var patch = { context: ctx };
+          if (language) {
+            patch.language = language;
+          }
+          window.voiceSession.update(patch);
+        }
+
+        // VOICE IN: send the finished recording to Sarvam (via /api/listen).
+        function runVoiceIn(readyClip) {
+          if (!readyClip || !el.voice) {
+            return;
+          }
+          el.voice.hidden = false;
+          el.voiceLang.textContent = "TRANSCRIBING…";
+          el.voiceTranscript.textContent = "";
+          el.voiceEn.textContent = "";
+          if (el.speakButton) {
+            el.speakButton.hidden = true;
+          }
+          setMessage("Transcribing your voice with Sarvam…");
+
+          blobToBase64(readyClip.blob)
+            .then(function (audioBase64) {
+              return fetch("/api/listen", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  audioBase64: audioBase64,
+                  mimeType: readyClip.mimeType,
+                  filename: readyClip.name,
+                  sessionId: currentSessionId(),
+                }),
+              });
+            })
+            .then(function (r) {
+              return r.json().then(function (j) {
+                return { ok: r.ok, body: j };
+              });
+            })
+            .then(function (out) {
+              if (!out.ok) {
+                throw new Error((out.body && out.body.error) || "listen failed");
+              }
+              lastListen = out.body;
+              var lang = out.body.language_code || "unknown";
+              el.voiceLang.textContent = prettyLang(lang).toUpperCase();
+              el.voiceTranscript.textContent =
+                out.body.transcript || "(no speech detected)";
+              el.voiceEn.textContent =
+                out.body.text_en && out.body.text_en !== out.body.transcript
+                  ? out.body.text_en
+                  : "";
+              if (el.speakButton) {
+                el.speakButton.hidden = out.body.needsReprompt === true;
+              }
+              setMessage(
+                out.body.needsReprompt
+                  ? "No speech detected. Tap the mic to try again."
+                  : "Transcribed. Tap SPEAK REPLY to hear it back.",
+              );
+              appendTurn(
+                "user",
+                out.body.text_en || out.body.transcript,
+                lang,
+              );
+            })
+            .catch(function (error) {
+              el.voiceLang.textContent = "VOICE ERROR";
+              el.voiceTranscript.textContent =
+                "Could not transcribe. " +
+                (error && error.message ? error.message : "");
+              if (el.speakButton) {
+                el.speakButton.hidden = true;
+              }
+              setMessage("Transcription failed. The recording is still saved.");
+            });
+        }
+
+        // VOICE OUT: speak a reply back in the speaker's language (/api/speak).
+        // Placeholder reply = echo the English understanding; the real tutor
+        // logic plugs in here later.
+        function speakReply() {
+          if (!lastListen) {
+            return;
+          }
+          var replyEnglish = lastListen.text_en || lastListen.transcript || "";
+          if (!replyEnglish.trim()) {
+            return;
+          }
+          var language =
+            lastListen.language_code && lastListen.language_code !== "unknown"
+              ? lastListen.language_code
+              : "pa-IN";
+
+          if (el.speakButton) {
+            el.speakButton.disabled = true;
+          }
+          setMessage("Generating a spoken reply with Sarvam…");
+
+          fetch("/api/speak", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              text: replyEnglish,
+              language: language,
+              sessionId: currentSessionId(),
+            }),
+          })
+            .then(function (r) {
+              return r.json().then(function (j) {
+                return { ok: r.ok, body: j };
+              });
+            })
+            .then(function (out) {
+              if (!out.ok || !out.body.url) {
+                throw new Error((out.body && out.body.error) || "speak failed");
+              }
+              if (replyPlayer) {
+                try {
+                  replyPlayer.pause();
+                } catch (e) {
+                  // ignore
+                }
+              }
+              replyPlayer = new Audio(out.body.url);
+              replyPlayer.play().catch(function () {
+                // Autoplay can be blocked; the button press should satisfy it.
+              });
+              setMessage("Playing the reply.");
+              appendTurn("assistant", out.body.text);
+            })
+            .catch(function (error) {
+              setMessage(
+                "Could not generate the reply. " +
+                  (error && error.message ? error.message : ""),
+              );
+            })
+            .then(function () {
+              if (el.speakButton) {
+                el.speakButton.disabled = false;
+              }
+            });
+        }
+
         el.recordButton.addEventListener("click", handleRecordPress);
         el.saveButton.addEventListener("click", saveOrShare);
+        if (el.speakButton) {
+          el.speakButton.addEventListener("click", speakReply);
+        }
 
         document.addEventListener("visibilitychange", function () {
           if (

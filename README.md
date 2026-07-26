@@ -27,6 +27,30 @@ Browser (index.html)
         -> Supabase PostgREST (service_role, bypasses RLS)
 ```
 
+## Voice loop (Sarvam)
+
+Ported from the "Yén? voice in/out" handoff into Vercel functions so
+everything runs on one stack. The Sarvam key stays server-side.
+
+- **Voice in** — `POST /api/listen` `{ audioBase64, mimeType, sessionId }`
+  → Sarvam STT (`saaras:v3`, auto-detect) → translate to English
+  (`sarvam-translate:v1`) → store in `utterances` →
+  `{ transcript, language_code, text_en, needsReprompt }`.
+- **Voice out** — `POST /api/speak` `{ text, language, sessionId }`
+  → translate English → speaker language → Bulbul TTS (`bulbul:v3`)
+  → upload wav to the public `audio` bucket → `{ url, text, text_en }`.
+
+The recorder calls `listen` automatically when a clip is ready, shows the
+transcript, and the **SPEAK REPLY** button plays a spoken reply back in the
+detected language. The reply text is currently an echo placeholder — the real
+tutor logic plugs in between listen and speak.
+
+```
+record -> /api/listen (STT + translate) -> transcript
+       -> [tutor reply, English]         (placeholder echo for now)
+       -> /api/speak (translate + TTS)   -> 🔊 play + store
+```
+
 ## Setup
 
 ### 1. Supabase table (once)
