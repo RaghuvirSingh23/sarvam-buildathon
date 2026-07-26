@@ -82,7 +82,7 @@ async function generateAnswer(cfg, question) {
     },
     { role: "user", content: question },
   ];
-  return ciscoChat(cfg, messages, { maxTokens: 300, temperature: 0.3 });
+  return ciscoChat(cfg, messages, { maxTokens: 1024, temperature: 0.3 });
 }
 
 // Prior turns, verbatim (each user turn already carries its "STEP = ..."
@@ -168,7 +168,7 @@ module.exports = async function handler(req, res) {
         const messages = [{ role: "system", content: fullSystem(answer) }]
           .concat(history)
           .concat([{ role: "user", content: directive }]);
-        reply = await ciscoChat(cfg, messages, { maxTokens: 512 });
+        reply = await ciscoChat(cfg, messages, { maxTokens: 2048 });
       } catch (error) {
         reply = fallbackReply;
       }
