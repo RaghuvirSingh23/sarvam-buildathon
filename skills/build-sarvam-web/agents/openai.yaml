@@ -1,4 +1,0 @@
-interface:
-  display_name: "Build Sarvam-style Web"
-  short_description: "Build Sarvam-aligned websites and product UIs"
-  default_prompt: "Use $build-sarvam-web to build a responsive Sarvam-aligned product website."
