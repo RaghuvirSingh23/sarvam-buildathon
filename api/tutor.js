@@ -18,7 +18,10 @@ const {
   patchSession,
 } = require("../lib/backend");
 
-const BASE_SYSTEM = [
+// The ENTIRE Yén prompt: the ALWAYS rules plus all three STEP definitions.
+// Sent once as the system message and carried in every request. Each turn we
+// append only a short "STEP = ..." directive + the child's line as a user turn.
+const YEN_SYSTEM = [
   "You are Yén, a warm, simple friend for a young child (age 5–11). You help them stay",
   "curious and figure things out for themselves — you never just hand over the answer.",
   "",
@@ -32,33 +35,39 @@ const BASE_SYSTEM = [
   "- Stay with the child's OWN example. No metaphors, made-up stories, or new objects.",
   "",
   "Do only the STEP you are told this turn.",
+  "",
+  "STEP = ASK",
+  "Warmly take the child's question and ask what THEY think, using their own example",
+  '(vary your words, not always "what do you think"). Give no part of the reason yet.',
+  "",
+  "STEP = NUDGE",
+  "First react to their exact words — answer what they asked, or confirm the part they",
+  "got right. Then add ONE small new clue that builds directly on what they said. Don't",
+  "jump ahead, don't repeat an old hint, don't give the full reason.",
+  "",
+  "STEP = REVEAL",
+  "Warmly praise their effort in one line, then give the full reason in ONE simple",
+  "sentence, using the guidance reason without changing it.",
 ].join("\n");
 
-function askBlock(question) {
-  return [
-    "STEP = ASK",
-    `The child just asked: "${question}". Warmly take their question and ask what THEY`,
-    'think, using their own example (vary your words, not always "what do you think"). Give',
-    "no part of the reason yet.",
-  ].join("\n");
+// The system message = whole prompt + the private guidance reason (once known).
+function fullSystem(answer) {
+  if (answer && answer.trim()) {
+    return `${YEN_SYSTEM}\n\nReason, for your guidance only (never say it before REVEAL): "${answer.trim()}".`;
+  }
+  return YEN_SYSTEM;
 }
 
-function nudgeBlock(childSaid, answer) {
-  return [
-    "STEP = NUDGE",
-    `The child said: "${childSaid}". First react to their exact words — answer what they`,
-    "asked, or confirm the part they got right. Then add ONE small new clue that builds",
-    "directly on what they said. Don't jump ahead, don't repeat an old hint, don't give the",
-    `full reason. Reason, for your guidance only: "${answer}".`,
-  ].join("\n");
-}
-
-function revealBlock(childSaid, answer) {
-  return [
-    "STEP = REVEAL",
-    `The child said: "${childSaid}". Warmly praise their effort in one line, then give the`,
-    `full reason in ONE simple sentence, using this without changing it: "${answer}".`,
-  ].join("\n");
+// Per-turn user message: the step type + the child's spoken line (in English).
+function stepDirective(step, childText) {
+  const label =
+    step === "ask"
+      ? "STEP = ASK"
+      : step === "reveal"
+        ? "STEP = REVEAL"
+        : "STEP = NUDGE";
+  const verb = step === "ask" ? "The child just asked" : "The child said";
+  return `${label}\n${verb}: "${childText}"`;
 }
 
 // One true, child-simple reason for the original question. Guidance only.
@@ -76,6 +85,8 @@ async function generateAnswer(cfg, question) {
   return ciscoChat(cfg, messages, { maxTokens: 300, temperature: 0.3 });
 }
 
+// Prior turns, verbatim (each user turn already carries its "STEP = ..."
+// directive), so the model always sees the entire thread so far.
 function historyMessages(context) {
   if (!Array.isArray(context)) return [];
   return context
@@ -87,7 +98,7 @@ function historyMessages(context) {
         t.content.trim()
       );
     })
-    .slice(-8)
+    .slice(-20)
     .map(function (t) {
       return { role: t.role, content: t.content };
     });
@@ -133,6 +144,9 @@ module.exports = async function handler(req, res) {
       question = childText;
     }
 
+    // This turn's user message: "STEP = ASK/NUDGE" + the child's spoken line.
+    const directive = stepDirective(step, childText);
+
     // Scripted fallback keeps the voice loop alive if Cisco is unavailable
     // (missing creds, bad token, gateway error).
     const fallbackReply = isFirst
@@ -142,31 +156,19 @@ module.exports = async function handler(req, res) {
     let reply = fallbackReply;
     if (ciscoReady(cfg)) {
       try {
+        // On the first turn, work out the true reason once (private guidance).
         if (isFirst) {
           try {
             answer = await generateAnswer(cfg, question);
           } catch (error) {
             answer = "";
           }
-          const messages = [
-            {
-              role: "system",
-              content: `${BASE_SYSTEM}\n\n${askBlock(question)}`,
-            },
-            { role: "user", content: childText },
-          ];
-          reply = await ciscoChat(cfg, messages, { maxTokens: 512 });
-        } else {
-          const messages = [
-            {
-              role: "system",
-              content: `${BASE_SYSTEM}\n\n${nudgeBlock(childText, answer)}`,
-            },
-          ]
-            .concat(history)
-            .concat([{ role: "user", content: childText }]);
-          reply = await ciscoChat(cfg, messages, { maxTokens: 512 });
         }
+        // entire prompt (system) + entire thread so far + this turn's directive.
+        const messages = [{ role: "system", content: fullSystem(answer) }]
+          .concat(history)
+          .concat([{ role: "user", content: directive }]);
+        reply = await ciscoChat(cfg, messages, { maxTokens: 512 });
       } catch (error) {
         reply = fallbackReply;
       }
@@ -185,7 +187,7 @@ module.exports = async function handler(req, res) {
     });
     const nextContext = priorContext
       .concat([
-        { role: "user", content: childText },
+        { role: "user", content: directive },
         { role: "assistant", content: reply },
       ])
       .slice(-40);
