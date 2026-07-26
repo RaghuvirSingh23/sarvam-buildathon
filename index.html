@@ -375,6 +375,18 @@
         display: none;
       }
 
+      .voiceReply {
+        margin: 8px 0 0;
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 26px;
+        color: rgb(20 20 20 / 92%);
+      }
+
+      .voiceReply:empty {
+        display: none;
+      }
+
       .privacy {
         font-size: 11px;
         letter-spacing: 1.2px;
@@ -509,8 +521,8 @@
 
         <section class="content">
           <div class="introduction">
-            <h1>Record your voice.</h1>
-            <p>One tap to start. One tap to save.</p>
+            <h1>Talk with Yén.</h1>
+            <p>Tap the mic, ask anything, and Yén talks back.</p>
           </div>
 
           <div class="recordFrame">
@@ -543,21 +555,13 @@
             <audio class="audio" controls preload="metadata" data-audio>
               Your browser cannot play this recording.
             </audio>
-            <button class="saveButton" type="button" data-save-button>
-              SAVE / SHARE
-            </button>
-            <a class="downloadLink" download data-download-link
-              >Download audio instead</a
-            >
           </div>
 
           <div class="voice" data-voice hidden>
             <p class="voiceLang" data-voice-lang></p>
             <p class="voiceText" data-voice-transcript></p>
             <p class="voiceEn" data-voice-en></p>
-            <button class="saveButton" type="button" data-speak-button hidden>
-              SPEAK REPLY
-            </button>
+            <p class="voiceReply" data-voice-reply></p>
           </div>
         </section>
 
@@ -585,13 +589,11 @@
           message: document.querySelector("[data-message]"),
           clip: document.querySelector("[data-clip]"),
           audio: document.querySelector("[data-audio]"),
-          saveButton: document.querySelector("[data-save-button]"),
-          downloadLink: document.querySelector("[data-download-link]"),
           voice: document.querySelector("[data-voice]"),
           voiceLang: document.querySelector("[data-voice-lang]"),
           voiceTranscript: document.querySelector("[data-voice-transcript]"),
           voiceEn: document.querySelector("[data-voice-en]"),
-          speakButton: document.querySelector("[data-speak-button]"),
+          voiceReply: document.querySelector("[data-voice-reply]"),
         };
 
         // Last transcription result, used to drive the spoken reply.
@@ -738,8 +740,6 @@
           if (clip) {
             el.clip.hidden = false;
             el.audio.src = clip.url;
-            el.downloadLink.href = clip.url;
-            el.downloadLink.setAttribute("download", clip.name);
           } else {
             el.clip.hidden = true;
             el.audio.removeAttribute("src");
@@ -791,10 +791,10 @@
 
           setMessage(
             stopReason === "background"
-              ? "Stopped when Safari left the foreground. Play it or save it below."
+              ? "Stopped when the app left the foreground. Sending to Yén…"
               : stopReason === "interruption"
-                ? "Recording ended after an interruption. Play it or save it below."
-                : "Recording ready. Play it or save it below."
+                ? "Recording ended after an interruption. Sending to Yén…"
+                : "Got it. Sending to Yén…"
           );
 
           // Kick off the Sarvam voice-in pipeline for the finished clip.
@@ -945,46 +945,6 @@
             return;
           }
           startRecording();
-        }
-
-        function saveOrShare() {
-          if (!clip) {
-            return;
-          }
-
-          var file;
-          try {
-            file = new File([clip.blob], clip.name, { type: clip.mimeType });
-          } catch (error) {
-            file = null;
-          }
-
-          if (
-            file &&
-            typeof navigator.share === "function" &&
-            (!navigator.canShare || navigator.canShare({ files: [file] }))
-          ) {
-            navigator
-              .share({ files: [file] })
-              .then(function () {
-                setMessage("Saved or shared from the iPhone share sheet.");
-              })
-              .catch(function (error) {
-                if (error && error.name === "AbortError") {
-                  return;
-                }
-                el.downloadLink.click();
-                setMessage(
-                  "If Safari previews the audio, tap Share \u2192 Save to Files."
-                );
-              });
-            return;
-          }
-
-          el.downloadLink.click();
-          setMessage(
-            "If Safari previews the audio, tap Share \u2192 Save to Files."
-          );
         }
 
         function blobToBase64(blob) {
@@ -1174,8 +1134,8 @@
           el.voiceLang.textContent = "TRANSCRIBING…";
           el.voiceTranscript.textContent = "";
           el.voiceEn.textContent = "";
-          if (el.speakButton) {
-            el.speakButton.hidden = true;
+          if (el.voiceReply) {
+            el.voiceReply.textContent = "";
           }
           setMessage("Transcribing your voice with Sarvam…");
 
@@ -1219,59 +1179,81 @@
                 out.body.text_en && out.body.text_en !== out.body.transcript
                   ? out.body.text_en
                   : "";
-              if (el.speakButton) {
-                el.speakButton.hidden = out.body.needsReprompt === true;
-              }
-              setMessage(
-                out.body.needsReprompt
-                  ? "No speech detected. Tap the mic to try again."
-                  : "Transcribed. Tap SPEAK REPLY to hear it back.",
-              );
               appendTurn(
                 "user",
                 out.body.text_en || out.body.transcript,
                 lang,
               );
+              if (out.body.needsReprompt) {
+                setMessage("No speech detected. Tap the mic to try again.");
+                return;
+              }
+              // Hand the understood text to Yén, then speak the reply back.
+              runTutor(out.body.text_en || out.body.transcript, lang);
             })
             .catch(function (error) {
               el.voiceLang.textContent = "VOICE ERROR";
               el.voiceTranscript.textContent =
                 "Could not transcribe. " +
                 (error && error.message ? error.message : "");
-              if (el.speakButton) {
-                el.speakButton.hidden = true;
-              }
-              setMessage("Transcription failed. The recording is still saved.");
+              setMessage("Transcription failed. Tap the mic to try again.");
             });
         }
 
-        // VOICE OUT: speak a reply back in the speaker's language (/api/speak).
-        // Placeholder reply = echo the English understanding; the real tutor
-        // logic plugs in here later.
-        function speakReply() {
-          if (!lastListen) {
+        // TUTOR: send the understood English to Yén (/api/tutor), show the
+        // reply, then speak it aloud in the child's language.
+        function runTutor(childEnglish, language) {
+          if (!childEnglish || !childEnglish.trim()) {
             return;
           }
-          var replyEnglish = lastListen.text_en || lastListen.transcript || "";
-          if (!replyEnglish.trim()) {
-            return;
-          }
-          var language =
-            lastListen.language_code && lastListen.language_code !== "unknown"
-              ? lastListen.language_code
-              : "pa-IN";
+          setMessage("Yén is thinking…");
+          fetch("/api/tutor", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              childText: childEnglish,
+              language: language,
+              sessionId: currentSessionId(),
+            }),
+          })
+            .then(function (r) {
+              return r.json().then(function (j) {
+                return { ok: r.ok, body: j };
+              });
+            })
+            .then(function (out) {
+              if (!out.ok || !out.body.reply) {
+                throw new Error((out.body && out.body.error) || "tutor failed");
+              }
+              if (el.voiceReply) {
+                el.voiceReply.textContent = out.body.reply;
+              }
+              appendTurn("assistant", out.body.reply);
+              speak(out.body.reply, language);
+            })
+            .catch(function (error) {
+              setMessage(
+                "Yén could not reply. " +
+                  (error && error.message ? error.message : ""),
+              );
+            });
+        }
 
-          if (el.speakButton) {
-            el.speakButton.disabled = true;
+        // VOICE OUT: speak Yén's English reply back in the child's language.
+        function speak(replyEnglish, language) {
+          if (!replyEnglish || !replyEnglish.trim()) {
+            return;
           }
-          setMessage("Generating a spoken reply with Sarvam…");
+          var lang =
+            language && language !== "unknown" ? language : "en-IN";
+          setMessage("Speaking Yén's reply…");
 
           fetch("/api/speak", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               text: replyEnglish,
-              language: language,
+              language: lang,
               sessionId: currentSessionId(),
             }),
           })
@@ -1293,29 +1275,19 @@
               }
               replyPlayer = new Audio(out.body.url);
               replyPlayer.play().catch(function () {
-                // Autoplay can be blocked; the button press should satisfy it.
+                // Autoplay may be blocked until the next user gesture.
               });
-              setMessage("Playing the reply.");
-              appendTurn("assistant", out.body.text);
+              setMessage("Tap the mic when you want to answer Yén.");
             })
             .catch(function (error) {
               setMessage(
-                "Could not generate the reply. " +
+                "Could not speak the reply. " +
                   (error && error.message ? error.message : ""),
               );
-            })
-            .then(function () {
-              if (el.speakButton) {
-                el.speakButton.disabled = false;
-              }
             });
         }
 
         el.recordButton.addEventListener("click", handleRecordPress);
-        el.saveButton.addEventListener("click", saveOrShare);
-        if (el.speakButton) {
-          el.speakButton.addEventListener("click", speakReply);
-        }
 
         document.addEventListener("visibilitychange", function () {
           if (
