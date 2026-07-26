@@ -324,6 +324,21 @@
         text-align: center;
       }
 
+      .session {
+        margin: 6px 0 0;
+        font-family: "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        line-height: 16px;
+        text-align: center;
+        color: rgb(20 20 20 / 45%);
+      }
+
+      .session[hidden] {
+        display: none;
+      }
+
       @keyframes recordingPulse {
         0%,
         100% {
@@ -481,6 +496,7 @@
         </section>
 
         <p class="privacy">AUDIO NEVER LEAVES THIS DEVICE</p>
+        <p class="session" data-session-label hidden></p>
       </main>
     </div>
 
@@ -908,6 +924,105 @@
         });
 
         render();
+      })();
+    </script>
+
+    <script>
+      // Session bootstrap: every page open creates a brand-new server-side
+      // session (its own conversation context) via our own /api/session
+      // endpoint. No Supabase or Sarvam key is ever exposed to the browser.
+      (function () {
+        "use strict";
+
+        var label = document.querySelector("[data-session-label]");
+
+        // In-memory only: a fresh session per open, never persisted client-side.
+        var session = {
+          id: null,
+          context: [],
+          language: null,
+        };
+
+        function showLabel(text) {
+          if (!label) {
+            return;
+          }
+          label.textContent = text;
+          label.hidden = false;
+        }
+
+        // Exposed for the recorder / upcoming Sarvam calls to append turns.
+        window.voiceSession = {
+          get id() {
+            return session.id;
+          },
+          get context() {
+            return session.context.slice();
+          },
+          isReady: function () {
+            return Boolean(session.id);
+          },
+          // Persist an updated context array to the session row.
+          update: function (patch) {
+            if (!session.id) {
+              return Promise.resolve(null);
+            }
+            var payload = { id: session.id };
+            if (patch && Array.isArray(patch.context)) {
+              session.context = patch.context;
+              payload.context = patch.context;
+            }
+            if (patch && typeof patch.language === "string") {
+              session.language = patch.language;
+              payload.language = patch.language;
+            }
+            if (patch && patch.meta && typeof patch.meta === "object") {
+              payload.meta = patch.meta;
+            }
+            return fetch("/api/session", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            })
+              .then(function (r) {
+                return r.ok ? r.json() : null;
+              })
+              .catch(function () {
+                return null;
+              });
+          },
+        };
+
+        function createSession() {
+          fetch("/api/session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
+          })
+            .then(function (r) {
+              if (!r.ok) {
+                throw new Error("session request failed");
+              }
+              return r.json();
+            })
+            .then(function (data) {
+              if (!data || !data.session || !data.session.id) {
+                throw new Error("no session");
+              }
+              session.id = data.session.id;
+              session.context = Array.isArray(data.session.context)
+                ? data.session.context
+                : [];
+              session.language = data.session.language || null;
+              showLabel("SESSION " + String(session.id).slice(0, 8));
+            })
+            .catch(function () {
+              // Recorder still works fully; only the session store is offline.
+              showLabel("SESSION OFFLINE");
+            });
+        }
+
+        createSession();
       })();
     </script>
   </body>
