@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#fff7ec" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Curiosity Engine — Parent</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box}html,body{margin:0;padding:0}
+    :root{--bg:#fff7ec;--card:#ffffff;--ink:#2a2440;--ink2:#8a7fa6;--line:#efe6f7;--purple:#7c5cff;--purple100:#efeaff;--sky:#5bc8ff;--sun:#ffb020;--coral:#ff7a66;--green:#57c785}
+    body{background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Avenir Next","Segoe UI",Verdana,sans-serif;min-height:100svh}
+    .shell{width:min(100%,760px);margin-inline:auto;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 60px}
+    /* playful hero */
+    .hero{position:relative;overflow:hidden;border-radius:30px;padding:22px 20px;color:#fff;display:flex;align-items:center;gap:14px;
+      background:linear-gradient(135deg,#7c5cff 0%,#5bc8ff 55%,#ffb020 130%);box-shadow:0 10px 30px rgba(124,92,255,.25)}
+    .hero .bubbles{position:absolute;inset:0;pointer-events:none;opacity:.25;font-size:22px}
+    .hero h1{margin:0;font-size:24px;font-weight:800}
+    .hero p{margin:5px 0 0;font-size:13.5px;opacity:.95}
+    .mascot{flex:none;filter:drop-shadow(0 4px 6px rgba(0,0,0,.15))}
+    .eyebrow{font-size:11px;font-weight:800;letter-spacing:2px;opacity:.95;margin:0 0 4px;text-transform:uppercase}
+    .sectionLabel{font-size:13px;font-weight:800;letter-spacing:.4px;color:var(--purple);margin:24px 6px 12px;text-transform:uppercase}
+    /* chat list */
+    .chat{display:flex;gap:14px;align-items:center;width:100%;text-align:left;background:var(--card);border:2px solid var(--line);border-radius:24px;padding:14px 16px;margin-bottom:12px;cursor:pointer;font:inherit;transition:.15s}
+    .chat:hover{border-color:var(--purple);transform:translateY(-2px) scale(1.005);box-shadow:0 10px 24px rgba(124,92,255,.15)}
+    .chat.live{border-color:var(--green);box-shadow:0 0 0 3px rgba(87,199,133,.18)}
+    .avatar{flex:none;width:58px;height:58px;border-radius:20px;display:grid;place-items:center;font-size:30px;background:linear-gradient(135deg,#efeaff,#e6f6ff);border:2px solid #fff;box-shadow:0 2px 8px rgba(124,92,255,.12)}
+    .chat .body{flex:1;min-width:0}
+    .chat .t{font-size:17px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .chat .m{font-size:12px;color:var(--ink2);margin-top:5px;font-weight:600}
+    .livedot{color:var(--green);font-weight:800}
+    .pill{display:inline-block;background:var(--purple100);color:var(--purple);border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700;margin-left:4px}
+    /* detail */
+    .back{border:0;background:var(--purple100);color:var(--purple);font-weight:700;font-size:13px;border-radius:999px;padding:8px 14px;cursor:pointer;margin-bottom:14px}
+    .dhero{display:flex;gap:14px;align-items:center;background:var(--card);border:2px solid var(--line);border-radius:24px;padding:16px;margin-bottom:18px}
+    .dhero .avatar{width:66px;height:66px;font-size:36px}
+    .dhero h2{margin:0;font-size:20px;font-weight:800}
+    .dhero .m{font-size:12px;color:var(--ink2);margin-top:6px;font-weight:600}
+    .turn{display:flex;gap:10px;margin-bottom:12px;align-items:flex-end}
+    .turn.child{flex-direction:row-reverse}
+    .turn .face{flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:20px;background:#fff;border:2px solid var(--line)}
+    .bubble{max-width:78%;padding:12px 15px;border-radius:20px}
+    .child .bubble{background:linear-gradient(135deg,#efeaff,#e6f6ff);border:2px solid #ddd3ff;border-bottom-right-radius:6px}
+    .tutor .bubble{background:#fff;border:2px solid var(--line);border-bottom-left-radius:6px}
+    .bubble .en{font-size:16px;font-weight:600;line-height:1.4}
+    .bubble .orig{color:var(--ink2);font-size:14px;margin-top:5px;font-weight:600}
+    .empty,.err{color:var(--ink2);padding:24px 6px;font-weight:600}.err{color:var(--coral)}
+    [hidden]{display:none !important}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="hero">
+      <span class="bubbles">✨ ⭐ 🌙 💫 ✨</span>
+      <span class="mascot">
+        <svg viewBox="0 0 100 104" width="72" height="76" aria-hidden="true">
+          <ellipse cx="50" cy="96" rx="20" ry="5" fill="rgba(0,0,0,.12)"/>
+          <path d="M24 26 L42 42 L22 46 Z" fill="#6a4bff"/><path d="M76 26 L58 42 L78 46 Z" fill="#6a4bff"/>
+          <ellipse cx="50" cy="58" rx="31" ry="33" fill="#7c5cff"/>
+          <ellipse cx="50" cy="66" rx="20" ry="22" fill="#efeaff"/>
+          <circle cx="38" cy="47" r="14" fill="#fff"/><circle cx="62" cy="47" r="14" fill="#fff"/>
+          <circle cx="38" cy="48" r="6.5" fill="#2a2440"/><circle cx="62" cy="48" r="6.5" fill="#2a2440"/>
+          <circle cx="40.5" cy="45.5" r="2.2" fill="#fff"/><circle cx="64.5" cy="45.5" r="2.2" fill="#fff"/>
+          <polygon points="50,54 45,61 55,61" fill="#ffb020"/>
+          <path d="M30 20 q20 -14 40 0" stroke="#ffb020" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <circle cx="30" cy="16" r="3" fill="#ff7a66"/><circle cx="50" cy="11" r="3" fill="#5bc8ff"/><circle cx="70" cy="16" r="3" fill="#57c785"/>
+        </svg>
+      </span>
+      <div>
+        <p class="eyebrow">Curiosity Engine</p>
+        <h1>Your child's wonder ✨</h1>
+        <p>Every question they asked — and how they found the answer themselves.</p>
+      </div>
+    </div>
+
+    <div id="listView">
+      <p class="sectionLabel">🗨️ Conversations</p>
+      <div id="chats"><p class="empty">Loading…</p></div>
+    </div>
+
+    <div id="detailView" hidden>
+      <button class="back" id="back">← All conversations</button>
+      <div class="dhero"><div class="avatar" id="dAvatar">💭</div><div><h2 id="dTitle"></h2><div class="m" id="dMeta"></div></div></div>
+      <div id="messages"></div>
+    </div>
+  </div>
+
+  <script>
+    const $=(id)=>document.getElementById(id);
+    const LANG={"pa-IN":"Punjabi","od-IN":"Odia","hi-IN":"Hindi","en-IN":"English","bn-IN":"Bengali","ta-IN":"Tamil","te-IN":"Telugu","gu-IN":"Gujarati","kn-IN":"Kannada","ml-IN":"Malayalam","mr-IN":"Marathi","unknown":"Unknown"};
+    const langName=(c)=>LANG[c]||c||"Unknown";
+    const timeAgo=(iso)=>{const s=(Date.now()-new Date(iso).getTime())/1000;if(s<60)return"just now";if(s<3600)return Math.floor(s/60)+"m ago";if(s<86400)return Math.floor(s/3600)+"h ago";return Math.floor(s/86400)+"d ago"};
+    const isLive=(iso)=>(Date.now()-new Date(iso).getTime())<90000;
+    const ICONS=[[/star|tara|तारे|ਤਾਰ/i,"⭐"],[/moon|chand|चंद|ਚੰਦ/i,"🌙"],[/sky|aasm|आकाश|ਅਸਮਾਨ/i,"🌤️"],[/sun|सूरज/i,"☀️"],[/eat|food|khaa|खा|ଖା|khana/i,"🍎"],[/water|paani|पानी|ପାଣି/i,"💧"],[/bird|fly|पक्षी|उड/i,"🐦"],[/tree|plant|पेड़|leaf|पत्त/i,"🌳"],[/dog|cat|animal|जानवर/i,"🐾"],[/rain|cloud|बारिश|बादल/i,"🌧️"],[/number|count|गिन|maths?/i,"🔢"],[/rainbow|colou?r|रंग/i,"🌈"],[/body|blood|heart|शरीर/i,"❤️"],[/fish|sea|ocean|समुंदर|समुद्र/i,"🐟"]];
+    const iconFor=(t)=>{const s=(t||"").toLowerCase();for(const[re,e]of ICONS)if(re.test(s))return e;return"💭"};
+
+    let openId=null,sessions=[];
+    async function fetchData(){
+      const res=await fetch("/api/analytics");
+      if(!res.ok)throw new Error((await res.json()).error||"failed");
+      return await res.json();
+    }
+    function renderList(){
+      if(!sessions.length){$("chats").innerHTML='<p class="empty">No conversations yet. Ask your child to try the app! 🎤</p>';return}
+      $("chats").innerHTML=sessions.map((s,i)=>`
+        <button class="chat ${isLive(s.last_at)?"live":""}" data-i="${i}">
+          <div class="avatar">${iconFor(s.title)}</div>
+          <div class="body">
+            <div class="t">${s.title}</div>
+            <div class="m">${langName(s.lang)} · ${s.count} messages · ${timeAgo(s.last_at)} ${isLive(s.last_at)?'<span class="livedot">● LIVE</span>':""}</div>
+          </div>
+        </button>`).join("");
+      [...document.querySelectorAll(".chat")].forEach(el=>el.addEventListener("click",()=>openChat(sessions[+el.dataset.i].id)));
+    }
+    function renderDetail(){
+      const s=sessions.find(x=>x.id===openId);if(!s){showList();return}
+      $("dAvatar").textContent=iconFor(s.title);$("dTitle").textContent=s.title;
+      $("dMeta").innerHTML=`${langName(s.lang)} · ${s.count} messages · ${timeAgo(s.last_at)}`+(isLive(s.last_at)?' <span class="livedot">● LIVE</span>':"");
+      $("messages").innerHTML=s.messages.map(m=>`
+        <div class="turn ${m.kind==="input"?"child":"tutor"}">
+          <div class="face">${m.kind==="input"?"🧒":"🦉"}</div>
+          <div class="bubble"><div class="en">${m.text_en||m.text||""}</div>${m.text&&m.text!==m.text_en?`<div class="orig">${m.text}</div>`:""}</div>
+        </div>`).join("");
+    }
+    function showList(){openId=null;$("detailView").hidden=true;$("listView").hidden=false;renderList()}
+    function openChat(id){openId=id;$("listView").hidden=true;$("detailView").hidden=false;renderDetail()}
+    $("back").addEventListener("click",showList);
+    async function refresh(first){
+      try{const d=await fetchData();sessions=d.sessions||[];if(openId)renderDetail();else renderList();if(first&&sessions.length)openChat(sessions[0].id)}
+      catch(e){if(!openId)$("chats").innerHTML=`<p class="err">Could not load: ${e.message}</p>`}
+    }
+    refresh(true);setInterval(()=>refresh(false),5000);
+  </script>
+</body>
+</html>
