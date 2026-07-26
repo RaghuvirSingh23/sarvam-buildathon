@@ -1,0 +1,914 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#fafafa" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Voice Note" />
+    <meta
+      name="description"
+      content="A private, install-free voice recorder for iPhone Safari."
+    />
+    <title>Voice Note</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      .page {
+        --black: #141414;
+        --off-white: #faf8f5;
+        --deep-indigo: #212191;
+        position: relative;
+        isolation: isolate;
+        min-width: 320px;
+        min-height: 100vh;
+        min-height: 100svh;
+        overflow: hidden;
+        color: var(--black);
+        background: #fafafa;
+        font-family: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      }
+
+      .background {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        width: 100%;
+        height: 100%;
+        background: #fafafa;
+        pointer-events: none;
+      }
+
+      .shell {
+        display: flex;
+        width: min(100%, 460px);
+        min-height: 100vh;
+        min-height: 100svh;
+        flex-direction: column;
+        margin-inline: auto;
+        padding:
+          calc(env(safe-area-inset-top, 0px) + 16px)
+          32px
+          calc(env(safe-area-inset-bottom, 0px) + 24px);
+      }
+
+      .header {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .header p,
+      .privacy,
+      .stateLabel {
+        margin: 0;
+        font-family: "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        line-height: 18px;
+      }
+
+      .header p {
+        letter-spacing: 1.4px;
+      }
+
+      .header span {
+        display: block;
+        width: 44px;
+        height: 2px;
+        background: var(--black);
+      }
+
+      .content {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        padding-block: 24px;
+      }
+
+      .introduction {
+        width: 100%;
+        max-width: 320px;
+        text-align: center;
+      }
+
+      .introduction h1 {
+        margin: 0;
+        font-size: clamp(29px, 8vw, 32px);
+        font-weight: 600;
+        letter-spacing: -0.7px;
+        line-height: 1.25;
+        text-wrap: balance;
+      }
+
+      .introduction p {
+        margin: 8px 0 0;
+        font-size: 16px;
+        font-weight: 500;
+        line-height: 24px;
+      }
+
+      .recordFrame {
+        position: relative;
+        display: grid;
+        width: 176px;
+        height: 176px;
+        place-items: center;
+      }
+
+      .pulse {
+        position: absolute;
+        width: 144px;
+        height: 144px;
+        border-radius: 50%;
+        background: var(--deep-indigo);
+        animation: recordingPulse 1.8s ease-in-out infinite;
+      }
+
+      .recordButton {
+        position: relative;
+        display: grid;
+        width: 144px;
+        height: 144px;
+        padding: 0;
+        place-items: center;
+        overflow: hidden;
+        border: 0;
+        border-radius: 50%;
+        color: var(--off-white);
+        background: linear-gradient(145deg, #3a3f5c 0%, #1e2033 100%);
+        box-shadow: 0 12px 22px rgb(20 20 20 / 22%);
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        transition:
+          opacity 150ms ease,
+          transform 150ms ease,
+          box-shadow 150ms ease;
+      }
+
+      .recordButton:active:not(:disabled) {
+        transform: scale(0.97);
+      }
+
+      .recordButton:focus-visible,
+      .saveButton:focus-visible,
+      .downloadLink:focus-visible {
+        outline: 3px solid #556adc;
+        outline-offset: 4px;
+      }
+
+      .recordButton:disabled {
+        cursor: wait;
+        opacity: 0.56;
+      }
+
+      .recordButtonActive {
+        border: 4px solid var(--deep-indigo);
+        background: var(--black);
+      }
+
+      .microphone {
+        position: relative;
+        display: block;
+        width: 54px;
+        height: 66px;
+      }
+
+      .microphoneCapsule {
+        position: absolute;
+        top: 0;
+        left: 14px;
+        width: 26px;
+        height: 39px;
+        border: 4px solid var(--off-white);
+        border-radius: 14px;
+      }
+
+      .microphoneArc {
+        position: absolute;
+        top: 25px;
+        left: 5px;
+        width: 44px;
+        height: 27px;
+        border-right: 4px solid var(--off-white);
+        border-bottom: 4px solid var(--off-white);
+        border-left: 4px solid var(--off-white);
+        border-radius: 0 0 22px 22px;
+      }
+
+      .microphoneStem {
+        position: absolute;
+        top: 50px;
+        left: 25px;
+        width: 4px;
+        height: 12px;
+        border-radius: 2px;
+        background: var(--off-white);
+      }
+
+      .microphoneBase {
+        position: absolute;
+        bottom: 0;
+        left: 14px;
+        width: 26px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--off-white);
+      }
+
+      .stopGlyph {
+        display: block;
+        width: 38px;
+        height: 38px;
+        border-radius: 6px;
+        background: var(--off-white);
+      }
+
+      .status {
+        width: 100%;
+        min-height: 54px;
+        max-width: 340px;
+        text-align: center;
+      }
+
+      .stateLabel {
+        margin-bottom: 6px;
+      }
+
+      .message {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 500;
+        line-height: 22px;
+        text-wrap: pretty;
+      }
+
+      .clip {
+        display: flex;
+        width: 100%;
+        max-width: 340px;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        border: 1px solid rgb(20 20 20 / 12%);
+        border-radius: 18px;
+        background: rgb(250 248 245 / 72%);
+        box-shadow: 0 10px 30px rgb(33 33 145 / 8%);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+      }
+
+      .clip[hidden] {
+        display: none;
+      }
+
+      .audio {
+        display: block;
+        width: 100%;
+        height: 42px;
+      }
+
+      .saveButton {
+        min-height: 44px;
+        padding: 11px 20px;
+        border: 0;
+        border-radius: 999px;
+        color: var(--off-white);
+        background: var(--black);
+        font-family: "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        line-height: 18px;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .saveButton:active {
+        transform: scale(0.97);
+      }
+
+      .downloadLink {
+        color: var(--black);
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 18px;
+        text-underline-offset: 3px;
+      }
+
+      .privacy {
+        font-size: 11px;
+        letter-spacing: 1.2px;
+        text-align: center;
+      }
+
+      @keyframes recordingPulse {
+        0%,
+        100% {
+          opacity: 0.34;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0;
+          transform: scale(1.28);
+        }
+      }
+
+      @media (max-height: 740px) {
+        .content {
+          gap: 16px;
+          padding-block: 16px;
+        }
+
+        .recordFrame {
+          height: 152px;
+        }
+
+        .clip {
+          gap: 8px;
+          padding: 12px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .pulse {
+          animation: none;
+          opacity: 0.2;
+        }
+
+        .recordButton,
+        .saveButton {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <svg
+        aria-hidden="true"
+        class="background"
+        preserveAspectRatio="none"
+        viewBox="0 0 390 844"
+      >
+        <defs>
+          <filter
+            height="150%"
+            id="mic-spectrum-blur"
+            width="150%"
+            x="-25%"
+            y="-25%"
+          >
+            <feGaussianBlur stdDeviation="24" />
+          </filter>
+          <radialGradient
+            cx="195"
+            cy="-260"
+            gradientUnits="userSpaceOnUse"
+            id="mic-spectrum"
+            r="580"
+          >
+            <stop offset="75%" stop-color="#f9730c" />
+            <stop offset="78%" stop-color="#ffb053" />
+            <stop offset="80%" stop-color="#a5bbfc" />
+            <stop offset="100%" stop-color="#f4f7ff" />
+          </radialGradient>
+          <radialGradient
+            cx="195"
+            cy="390"
+            gradientUnits="userSpaceOnUse"
+            id="mic-indigo-atmosphere"
+            r="330"
+          >
+            <stop offset="0%" stop-color="#a5bbfc" stop-opacity=".3" />
+            <stop offset="40%" stop-color="#d5e2ff" stop-opacity=".3" />
+            <stop offset="70%" stop-color="#d5e2ff" stop-opacity="0" />
+            <stop offset="100%" stop-color="#fafafa" stop-opacity="0" />
+          </radialGradient>
+          <linearGradient
+            gradientUnits="userSpaceOnUse"
+            id="mic-top-fade"
+            x1="0"
+            x2="0"
+            y1="0"
+            y2="112"
+          >
+            <stop offset="0%" stop-color="#fafafa" stop-opacity=".82" />
+            <stop offset="100%" stop-color="#fafafa" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+        <rect
+          fill="url(#mic-spectrum)"
+          filter="url(#mic-spectrum-blur)"
+          height="844"
+          width="390"
+        />
+        <rect fill="url(#mic-indigo-atmosphere)" height="844" width="390" />
+        <rect fill="url(#mic-top-fade)" height="112" width="390" />
+      </svg>
+
+      <main class="shell">
+        <header class="header">
+          <p>VOICE NOTE</p>
+          <span></span>
+        </header>
+
+        <section class="content">
+          <div class="introduction">
+            <h1>Record your voice.</h1>
+            <p>One tap to start. One tap to save.</p>
+          </div>
+
+          <div class="recordFrame">
+            <span class="pulse" data-pulse hidden></span>
+            <button
+              aria-label="Start voice recording"
+              aria-pressed="false"
+              class="recordButton"
+              data-record-button
+              type="button"
+            >
+              <span aria-hidden="true" class="microphone" data-mic-glyph>
+                <span class="microphoneCapsule"></span>
+                <span class="microphoneArc"></span>
+                <span class="microphoneStem"></span>
+                <span class="microphoneBase"></span>
+              </span>
+              <span class="stopGlyph" data-stop-glyph hidden></span>
+            </button>
+          </div>
+
+          <div class="status">
+            <p class="stateLabel" data-state-label>READY</p>
+            <p aria-atomic="true" aria-live="polite" class="message" data-message>
+              Tap the microphone to begin.
+            </p>
+          </div>
+
+          <div class="clip" data-clip hidden>
+            <audio class="audio" controls preload="metadata" data-audio>
+              Your browser cannot play this recording.
+            </audio>
+            <button class="saveButton" type="button" data-save-button>
+              SAVE / SHARE
+            </button>
+            <a class="downloadLink" download data-download-link
+              >Download audio instead</a
+            >
+          </div>
+        </section>
+
+        <p class="privacy">AUDIO NEVER LEAVES THIS DEVICE</p>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var MIME_TYPE_CANDIDATES = [
+          "audio/mp4",
+          "audio/webm;codecs=opus",
+          "audio/webm",
+        ];
+
+        var el = {
+          recordButton: document.querySelector("[data-record-button]"),
+          micGlyph: document.querySelector("[data-mic-glyph]"),
+          stopGlyph: document.querySelector("[data-stop-glyph]"),
+          pulse: document.querySelector("[data-pulse]"),
+          stateLabel: document.querySelector("[data-state-label]"),
+          message: document.querySelector("[data-message]"),
+          clip: document.querySelector("[data-clip]"),
+          audio: document.querySelector("[data-audio]"),
+          saveButton: document.querySelector("[data-save-button]"),
+          downloadLink: document.querySelector("[data-download-link]"),
+        };
+
+        // Recorder state (mirrors the hardened React implementation).
+        var phase = "idle"; // idle | requesting | recording | processing | ready | error
+        var elapsedMs = 0;
+        var clip = null; // { blob, durationMs, mimeType, name, url }
+
+        var recorder = null;
+        var stream = null;
+        var chunks = [];
+        var clipUrl = null;
+        var timerId = null;
+        var startedAt = 0;
+        var stopReason = "manual"; // manual | background | interruption
+
+        function formatDuration(durationMs) {
+          var totalSeconds = Math.floor(durationMs / 1000);
+          var minutes = Math.floor(totalSeconds / 60);
+          var seconds = totalSeconds % 60;
+          return (
+            String(minutes).padStart(2, "0") +
+            ":" +
+            String(seconds).padStart(2, "0")
+          );
+        }
+
+        function createFileName(mimeType) {
+          var extension = mimeType.indexOf("mp4") !== -1
+            ? "m4a"
+            : mimeType.indexOf("webm") !== -1
+              ? "webm"
+              : mimeType.indexOf("ogg") !== -1
+                ? "ogg"
+                : mimeType.indexOf("wav") !== -1
+                  ? "wav"
+                  : "audio";
+          var timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+          return "voice-note-" + timestamp + "." + extension;
+        }
+
+        function chooseMimeType() {
+          if (
+            typeof MediaRecorder === "undefined" ||
+            typeof MediaRecorder.isTypeSupported !== "function"
+          ) {
+            return undefined;
+          }
+          for (var i = 0; i < MIME_TYPE_CANDIDATES.length; i += 1) {
+            if (MediaRecorder.isTypeSupported(MIME_TYPE_CANDIDATES[i])) {
+              return MIME_TYPE_CANDIDATES[i];
+            }
+          }
+          return undefined;
+        }
+
+        function microphoneErrorMessage(error) {
+          if (error && error.name === "NotAllowedError") {
+            return "Microphone access is blocked. Open Safari\u2019s Page Menu \u2192 Website Settings \u2192 Microphone \u2192 Allow.";
+          }
+          if (error && error.name === "NotFoundError") {
+            return "No microphone was found on this device.";
+          }
+          if (error && error.name === "NotReadableError") {
+            return "The microphone is busy in another app. Close it and try again.";
+          }
+          return "The microphone could not start. Please try again.";
+        }
+
+        function setMessage(text) {
+          el.message.textContent = text;
+        }
+
+        function clearTimer() {
+          if (timerId) {
+            clearInterval(timerId);
+            timerId = null;
+          }
+        }
+
+        function releaseStream(target) {
+          if (target) {
+            target.getTracks().forEach(function (track) {
+              track.stop();
+            });
+          }
+          if (stream === target) {
+            stream = null;
+          }
+        }
+
+        function replaceClip(nextClip) {
+          if (clipUrl) {
+            URL.revokeObjectURL(clipUrl);
+          }
+          clipUrl = nextClip ? nextClip.url : null;
+          clip = nextClip;
+          render();
+        }
+
+        function computeStateLabel() {
+          if (phase === "recording") {
+            return "RECORDING  " + formatDuration(elapsedMs);
+          }
+          if (phase === "processing") {
+            return "PREPARING";
+          }
+          if (phase === "ready") {
+            return "READY  " + formatDuration(clip ? clip.durationMs : elapsedMs);
+          }
+          if (phase === "error") {
+            return "NEEDS ATTENTION";
+          }
+          if (phase === "requesting") {
+            return "GETTING READY";
+          }
+          return "READY";
+        }
+
+        function render() {
+          var isRecording = phase === "recording";
+          var isBusy = phase === "requesting" || phase === "processing";
+
+          el.stateLabel.textContent = computeStateLabel();
+
+          el.recordButton.disabled = isBusy;
+          el.recordButton.setAttribute(
+            "aria-pressed",
+            isRecording ? "true" : "false"
+          );
+          el.recordButton.setAttribute(
+            "aria-label",
+            isRecording ? "Stop and prepare recording" : "Start voice recording"
+          );
+          el.recordButton.classList.toggle("recordButtonActive", isRecording);
+
+          el.micGlyph.hidden = isRecording;
+          el.stopGlyph.hidden = !isRecording;
+          el.pulse.hidden = !isRecording;
+
+          if (clip) {
+            el.clip.hidden = false;
+            el.audio.src = clip.url;
+            el.downloadLink.href = clip.url;
+            el.downloadLink.setAttribute("download", clip.name);
+          } else {
+            el.clip.hidden = true;
+            el.audio.removeAttribute("src");
+          }
+        }
+
+        function setPhase(nextPhase) {
+          phase = nextPhase;
+          render();
+        }
+
+        function finalizeRecording(finishedRecorder, finishedStream) {
+          clearTimer();
+          releaseStream(finishedStream);
+
+          if (recorder === finishedRecorder) {
+            recorder = null;
+          }
+
+          var collected = chunks.filter(function (chunk) {
+            return chunk.size > 0;
+          });
+          chunks = [];
+          var durationMs = Math.max(0, Date.now() - startedAt);
+
+          if (collected.length === 0) {
+            elapsedMs = 0;
+            setPhase("error");
+            setMessage("Safari did not return any audio. Please try again.");
+            return;
+          }
+
+          var mimeType =
+            finishedRecorder.mimeType ||
+            (collected[0] && collected[0].type) ||
+            "audio/mp4";
+          var blob = new Blob(collected, { type: mimeType });
+          var nextClip = {
+            blob: blob,
+            durationMs: durationMs,
+            mimeType: mimeType,
+            name: createFileName(mimeType),
+            url: URL.createObjectURL(blob),
+          };
+
+          replaceClip(nextClip);
+          elapsedMs = durationMs;
+          setPhase("ready");
+
+          setMessage(
+            stopReason === "background"
+              ? "Stopped when Safari left the foreground. Play it or save it below."
+              : stopReason === "interruption"
+                ? "Recording ended after an interruption. Play it or save it below."
+                : "Recording ready. Play it or save it below."
+          );
+        }
+
+        function failActiveRecording(messageText) {
+          clearTimer();
+          var activeRecorder = recorder;
+          recorder = null;
+
+          if (activeRecorder && activeRecorder.state !== "inactive") {
+            activeRecorder.onstop = null;
+            try {
+              activeRecorder.stop();
+            } catch (error) {
+              // The recorder may already be transitioning to inactive.
+            }
+          }
+
+          releaseStream(stream);
+          chunks = [];
+          elapsedMs = 0;
+          setPhase("error");
+          setMessage(messageText);
+        }
+
+        function stopRecording(reason) {
+          reason = reason || "manual";
+          if (!recorder || recorder.state === "inactive") {
+            return;
+          }
+
+          stopReason = reason;
+          clearTimer();
+          setPhase("processing");
+          setMessage("Preparing your recording\u2026");
+
+          try {
+            recorder.stop();
+          } catch (error) {
+            failActiveRecording(
+              "The recording could not be finished. Please try again."
+            );
+          }
+        }
+
+        function startRecording() {
+          if (
+            phase === "requesting" ||
+            phase === "recording" ||
+            phase === "processing"
+          ) {
+            return;
+          }
+
+          if (
+            !window.isSecureContext ||
+            !navigator.mediaDevices ||
+            !navigator.mediaDevices.getUserMedia ||
+            typeof MediaRecorder === "undefined"
+          ) {
+            setPhase("error");
+            setMessage(
+              "This browser cannot record here. Open this page directly in iPhone Safari over HTTPS."
+            );
+            return;
+          }
+
+          setPhase("requesting");
+          setMessage("Asking Safari for microphone access\u2026");
+
+          navigator.mediaDevices
+            .getUserMedia({ audio: true })
+            .then(function (nextStream) {
+              stream = nextStream;
+              var mimeType = chooseMimeType();
+              var nextRecorder = mimeType
+                ? new MediaRecorder(nextStream, { mimeType: mimeType })
+                : new MediaRecorder(nextStream);
+
+              replaceClip(null);
+              chunks = [];
+              recorder = nextRecorder;
+              stopReason = "manual";
+
+              nextRecorder.ondataavailable = function (event) {
+                if (event.data && event.data.size > 0) {
+                  chunks.push(event.data);
+                }
+              };
+
+              nextRecorder.onerror = function () {
+                failActiveRecording(
+                  "Safari interrupted the microphone. Please try again."
+                );
+              };
+
+              nextRecorder.onstop = function () {
+                finalizeRecording(nextRecorder, nextStream);
+              };
+
+              nextStream.getAudioTracks().forEach(function (track) {
+                track.addEventListener(
+                  "ended",
+                  function () {
+                    if (
+                      recorder === nextRecorder &&
+                      nextRecorder.state !== "inactive"
+                    ) {
+                      stopRecording("interruption");
+                    }
+                  },
+                  { once: true }
+                );
+              });
+
+              // Periodic chunks make iPhone Safari interruptions less likely to
+              // lose the whole recording before its final stop event arrives.
+              nextRecorder.start(1000);
+              startedAt = Date.now();
+              elapsedMs = 0;
+              setPhase("recording");
+              setMessage("Tap again when you are done.");
+
+              timerId = setInterval(function () {
+                elapsedMs = Date.now() - startedAt;
+                el.stateLabel.textContent = computeStateLabel();
+              }, 250);
+            })
+            .catch(function (error) {
+              releaseStream(stream);
+              recorder = null;
+              stream = null;
+              elapsedMs = 0;
+              setPhase("error");
+              setMessage(microphoneErrorMessage(error));
+            });
+        }
+
+        function handleRecordPress() {
+          if (phase === "recording") {
+            stopRecording("manual");
+            return;
+          }
+          startRecording();
+        }
+
+        function saveOrShare() {
+          if (!clip) {
+            return;
+          }
+
+          var file;
+          try {
+            file = new File([clip.blob], clip.name, { type: clip.mimeType });
+          } catch (error) {
+            file = null;
+          }
+
+          if (
+            file &&
+            typeof navigator.share === "function" &&
+            (!navigator.canShare || navigator.canShare({ files: [file] }))
+          ) {
+            navigator
+              .share({ files: [file] })
+              .then(function () {
+                setMessage("Saved or shared from the iPhone share sheet.");
+              })
+              .catch(function (error) {
+                if (error && error.name === "AbortError") {
+                  return;
+                }
+                el.downloadLink.click();
+                setMessage(
+                  "If Safari previews the audio, tap Share \u2192 Save to Files."
+                );
+              });
+            return;
+          }
+
+          el.downloadLink.click();
+          setMessage(
+            "If Safari previews the audio, tap Share \u2192 Save to Files."
+          );
+        }
+
+        el.recordButton.addEventListener("click", handleRecordPress);
+        el.saveButton.addEventListener("click", saveOrShare);
+
+        document.addEventListener("visibilitychange", function () {
+          if (
+            document.visibilityState === "hidden" &&
+            phase === "recording"
+          ) {
+            stopRecording("background");
+          }
+        });
+
+        window.addEventListener("pagehide", function () {
+          if (phase === "recording") {
+            stopRecording("background");
+          }
+        });
+
+        render();
+      })();
+    </script>
+  </body>
+</html>
