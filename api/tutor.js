@@ -118,7 +118,11 @@ module.exports = async function handler(req, res) {
         ? session.meta
         : {};
     const tutor = meta.tutor && typeof meta.tutor === "object" ? meta.tutor : {};
-    const history = historyMessages(session && session.context);
+    // Prior turns only — the tutor owns context, so this never includes the
+    // current line yet. This is the shared thread ASK and every NUDGE build on.
+    const priorContext =
+      session && Array.isArray(session.context) ? session.context : [];
+    const history = historyMessages(priorContext);
 
     const isFirst = !tutor.question;
     const step = isFirst ? "ask" : "nudge";
@@ -168,7 +172,9 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // Persist tutor state for the next turn.
+    // Persist tutor state AND the conversation turns in one authoritative
+    // write, so the next turn sees a consistent, race-free context. Keep the
+    // last 40 turns to bound growth.
     const nextMeta = Object.assign({}, meta, {
       tutor: {
         question,
@@ -177,7 +183,17 @@ module.exports = async function handler(req, res) {
         lastStep: step,
       },
     });
-    await patchSession(cfg, sessionId, { meta: nextMeta });
+    const nextContext = priorContext
+      .concat([
+        { role: "user", content: childText },
+        { role: "assistant", content: reply },
+      ])
+      .slice(-40);
+    const patch = { meta: nextMeta, context: nextContext };
+    if (typeof body.language === "string" && body.language) {
+      patch.language = body.language;
+    }
+    await patchSession(cfg, sessionId, patch);
 
     res.status(200).json({ reply, step, question });
   } catch (error) {

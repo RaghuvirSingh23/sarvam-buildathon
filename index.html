@@ -1108,23 +1108,6 @@
             : null;
         }
 
-        function appendTurn(role, content, language) {
-          if (
-            !window.voiceSession ||
-            !window.voiceSession.isReady() ||
-            !content
-          ) {
-            return;
-          }
-          var ctx = window.voiceSession.context;
-          ctx.push({ role: role, content: content });
-          var patch = { context: ctx };
-          if (language) {
-            patch.language = language;
-          }
-          window.voiceSession.update(patch);
-        }
-
         // VOICE IN: send the finished recording to Sarvam (via /api/listen).
         function runVoiceIn(readyClip) {
           if (!readyClip || !el.voice) {
@@ -1179,11 +1162,6 @@
                 out.body.text_en && out.body.text_en !== out.body.transcript
                   ? out.body.text_en
                   : "";
-              appendTurn(
-                "user",
-                out.body.text_en || out.body.transcript,
-                lang,
-              );
               if (out.body.needsReprompt) {
                 setMessage("No speech detected. Tap the mic to try again.");
                 return;
@@ -1228,7 +1206,6 @@
               if (el.voiceReply) {
                 el.voiceReply.textContent = out.body.reply;
               }
-              appendTurn("assistant", out.body.reply);
               speak(out.body.reply, language);
             })
             .catch(function (error) {
