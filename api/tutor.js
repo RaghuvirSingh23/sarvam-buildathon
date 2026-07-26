@@ -73,7 +73,7 @@ async function generateAnswer(cfg, question) {
     },
     { role: "user", content: question },
   ];
-  return ciscoChat(cfg, messages, { maxTokens: 80, temperature: 0.3 });
+  return ciscoChat(cfg, messages, { maxTokens: 300, temperature: 0.3 });
 }
 
 function historyMessages(context) {
@@ -155,7 +155,7 @@ module.exports = async function handler(req, res) {
             },
             { role: "user", content: childText },
           ];
-          reply = await ciscoChat(cfg, messages, { maxTokens: 120 });
+          reply = await ciscoChat(cfg, messages, { maxTokens: 512 });
         } else {
           const messages = [
             {
@@ -165,7 +165,7 @@ module.exports = async function handler(req, res) {
           ]
             .concat(history)
             .concat([{ role: "user", content: childText }]);
-          reply = await ciscoChat(cfg, messages, { maxTokens: 120 });
+          reply = await ciscoChat(cfg, messages, { maxTokens: 512 });
         }
       } catch (error) {
         reply = fallbackReply;
