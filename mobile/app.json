@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "Drishti",
+    "slug": "drishti-vision-chat",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/drishti-icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "drishti",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/drishti-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#fafafa"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.raghuvirsingh23.drishti"
+    },
+    "android": {
+      "package": "com.raghuvirsingh23.drishti",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/drishti-icon.png",
+        "backgroundColor": "#fafafa"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/drishti-icon.png"
+    },
+    "plugins": [
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Drishti to use your camera for visual conversations.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ]
+    ]
+  }
+}

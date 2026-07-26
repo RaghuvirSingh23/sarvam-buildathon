@@ -3,6 +3,25 @@
 Reusable Codex skills for building and reviewing web products that align with
 Sarvam AI's current public brand and web experience.
 
+## Drishti iOS prototype
+
+[`mobile/`](mobile/README.md) contains a functional Expo app with a fixed
+bottom chat composer, permission-aware camera toggle, live preview, camera
+switching, photo capture, and message attachments.
+
+Run it on a physical iPhone with Expo Go:
+
+```bash
+cd mobile
+npm install
+npm start
+```
+
+The UI is Sarvam-aligned but uses an original identity and licensed substitute
+fonts. A live Sarvam inference endpoint is not yet connected.
+
+## Skills
+
 | Skill | Use it for |
 | --- | --- |
 | [`build-sarvam-web`](skills/build-sarvam-web/SKILL.md) | Build a responsive Sarvam-aligned website or product UI from verified tokens, component recipes, and implementation guardrails. |
