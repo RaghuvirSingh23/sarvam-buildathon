@@ -1002,6 +1002,127 @@
           });
         }
 
+        // Sarvam STT only accepts wav/mp3/aac/pcm — never the opus-in-mp4/webm
+        // that browsers actually record. So decode the clip with Web Audio and
+        // re-encode it to 16 kHz mono 16-bit PCM WAV before uploading.
+        function encodeWav(audioBuffer, sampleRate) {
+          var numCh = audioBuffer.numberOfChannels || 1;
+          var length = audioBuffer.length;
+          var mono = new Float32Array(length);
+          for (var ch = 0; ch < numCh; ch += 1) {
+            var data = audioBuffer.getChannelData(ch);
+            for (var i = 0; i < length; i += 1) {
+              mono[i] += data[i] / numCh;
+            }
+          }
+          var buffer = new ArrayBuffer(44 + length * 2);
+          var view = new DataView(buffer);
+          var writeString = function (off, s) {
+            for (var k = 0; k < s.length; k += 1) {
+              view.setUint8(off + k, s.charCodeAt(k));
+            }
+          };
+          writeString(0, "RIFF");
+          view.setUint32(4, 36 + length * 2, true);
+          writeString(8, "WAVE");
+          writeString(12, "fmt ");
+          view.setUint32(16, 16, true);
+          view.setUint16(20, 1, true); // PCM
+          view.setUint16(22, 1, true); // mono
+          view.setUint32(24, sampleRate, true);
+          view.setUint32(28, sampleRate * 2, true);
+          view.setUint16(32, 2, true);
+          view.setUint16(34, 16, true);
+          writeString(36, "data");
+          view.setUint32(40, length * 2, true);
+          var offset = 44;
+          for (var j = 0; j < length; j += 1) {
+            var sample = Math.max(-1, Math.min(1, mono[j]));
+            view.setInt16(
+              offset,
+              sample < 0 ? sample * 0x8000 : sample * 0x7fff,
+              true
+            );
+            offset += 2;
+          }
+          return new Blob([view], { type: "audio/wav" });
+        }
+
+        function blobToWav(blob) {
+          return new Promise(function (resolve, reject) {
+            var AC = window.AudioContext || window.webkitAudioContext;
+            var OAC =
+              window.OfflineAudioContext || window.webkitOfflineAudioContext;
+            if (!AC) {
+              reject(new Error("no AudioContext"));
+              return;
+            }
+            var reader = new FileReader();
+            reader.onerror = function () {
+              reject(reader.error || new Error("read failed"));
+            };
+            reader.onload = function () {
+              var decodeCtx = new AC();
+              var closeCtx = function () {
+                if (decodeCtx && typeof decodeCtx.close === "function") {
+                  try {
+                    decodeCtx.close();
+                  } catch (error) {
+                    /* already closed */
+                  }
+                }
+              };
+              var onDecoded = function (audioBuffer) {
+                var targetRate = 16000;
+                var frames = Math.max(
+                  1,
+                  Math.ceil(audioBuffer.duration * targetRate)
+                );
+                var offline;
+                try {
+                  offline = new OAC(1, frames, targetRate);
+                } catch (error) {
+                  // Safari can refuse arbitrary sample rates — keep native rate.
+                  resolve(encodeWav(audioBuffer, audioBuffer.sampleRate));
+                  closeCtx();
+                  return;
+                }
+                var src = offline.createBufferSource();
+                src.buffer = audioBuffer;
+                src.connect(offline.destination);
+                src.start(0);
+                offline
+                  .startRendering()
+                  .then(function (rendered) {
+                    resolve(encodeWav(rendered, targetRate));
+                    closeCtx();
+                  })
+                  .catch(function (error) {
+                    closeCtx();
+                    reject(error || new Error("resample failed"));
+                  });
+              };
+              var onErr = function (error) {
+                closeCtx();
+                reject(error || new Error("decode failed"));
+              };
+              try {
+                var maybe = decodeCtx.decodeAudioData(
+                  reader.result,
+                  onDecoded,
+                  onErr
+                );
+                if (maybe && typeof maybe.then === "function") {
+                  maybe.then(onDecoded, onErr);
+                }
+              } catch (error) {
+                onErr(error);
+              }
+            };
+            reader.readAsArrayBuffer(blob);
+          });
+        }
+
         function prettyLang(code) {
           var names = {
             "en-IN": "English",
@@ -1058,17 +1179,26 @@
           }
           setMessage("Transcribing your voice with Sarvam…");
 
-          blobToBase64(readyClip.blob)
-            .then(function (audioBase64) {
-              return fetch("/api/listen", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  audioBase64: audioBase64,
-                  mimeType: readyClip.mimeType,
-                  filename: readyClip.name,
-                  sessionId: currentSessionId(),
-                }),
+          blobToWav(readyClip.blob)
+            .catch(function () {
+              // Conversion unavailable — send the raw clip and let the
+              // server surface any format error.
+              return readyClip.blob;
+            })
+            .then(function (sendBlob) {
+              var mime = (sendBlob && sendBlob.type) || readyClip.mimeType;
+              var isWav = mime.indexOf("wav") !== -1;
+              return blobToBase64(sendBlob).then(function (audioBase64) {
+                return fetch("/api/listen", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    audioBase64: audioBase64,
+                    mimeType: isWav ? "audio/wav" : mime,
+                    filename: isWav ? "input.wav" : readyClip.name,
+                    sessionId: currentSessionId(),
+                  }),
+                });
               });
             })
             .then(function (r) {
